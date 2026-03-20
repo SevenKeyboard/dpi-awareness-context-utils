@@ -1,4 +1,4 @@
-﻿#Requires AutoHotkey v2.2.0+
+﻿#Requires AutoHotkey v2.0.0+
 ;==============================================================
 ; DpiAwarenessContextUtils — DPI awareness context helpers
 ;
