@@ -142,10 +142,23 @@ internal static partial class Program
         nint original = DpiAwarenessContextUtils.GetThreadDpiAwarenessContext();
         Check(original != 0, "The current thread must have a context.");
 
+        // Compare against a direct binding, after poisoning .NET's cached error code.
+        nint referencePrevious = NativeReference.SetThreadDpiAwarenessContext(0);
+        int expectedError = Marshal.GetLastPInvokeError();
+        if (referencePrevious != 0)
+        {
+            NativeReference.SetThreadDpiAwarenessContext(referencePrevious);
+            throw new InvalidOperationException("The direct invalid setter unexpectedly succeeded.");
+        }
+        const int staleError = 0x5A17;
+        Check(expectedError != staleError, "The native error must differ from the sentinel.");
+        Marshal.SetLastPInvokeError(staleError);
         nint previous = DpiAwarenessContextUtils.SetThreadDpiAwarenessContext(0);
+        int actualError = Marshal.GetLastPInvokeError();
         try
         {
             Equal(0, previous, "An invalid setter input must return zero.");
+            Equal(expectedError, actualError, "The public setter must capture the native error, not a stale value.");
             Equal(original, DpiAwarenessContextUtils.GetThreadDpiAwarenessContext(),
                 "A failed setter must leave the raw context unchanged.");
         }
@@ -217,7 +230,7 @@ internal static partial class Program
         [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
         internal static partial nint GetThreadDpiAwarenessContext();
 
-        [LibraryImport("user32.dll", EntryPoint = "SetThreadDpiAwarenessContext")]
+        [LibraryImport("user32.dll", EntryPoint = "SetThreadDpiAwarenessContext", SetLastError = true)]
         [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
         internal static partial nint SetThreadDpiAwarenessContext(nint context);
     }

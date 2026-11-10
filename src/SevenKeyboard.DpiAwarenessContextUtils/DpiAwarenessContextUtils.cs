@@ -1,4 +1,4 @@
-// DpiAwarenessContextUtils 1.0.0
+// DpiAwarenessContextUtils 1.0.1
 // Author: SevenKeyboard Ltd. (2025)
 // License: The Unlicense
 // https://github.com/SevenKeyboard/dpi-awareness-context-utils
@@ -34,6 +34,7 @@ public static partial class DpiAwarenessContextUtils
 
     /// <summary>Sets the current thread's context and returns its previous raw context, or zero on failure.</summary>
     /// <remarks>
+    /// The native last-error code is captured for Marshal.GetLastPInvokeError().
     /// This does not change the process DPI awareness. Restore the returned raw context in a finally
     /// block on the same thread; do not await between setting and restoring.
     /// </remarks>
@@ -74,7 +75,7 @@ public static partial class DpiAwarenessContextUtils
         [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
         internal static partial nint GetWindowDpiAwarenessContext(nint hWnd);
 
-        [LibraryImport("user32.dll", EntryPoint = "SetThreadDpiAwarenessContext")]
+        [LibraryImport("user32.dll", EntryPoint = "SetThreadDpiAwarenessContext", SetLastError = true)]
         [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
         internal static partial nint SetThreadDpiAwarenessContext(nint dpiContext);
     }
